@@ -6,13 +6,18 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FACTORY_API_KEY;
   if (!apiKey) {
-    return new Response("ANTHROPIC_API_KEY not set. Add it to .env.local", { status: 500 });
+    return new Response("Set ANTHROPIC_API_KEY (from console.anthropic.com) in Vercel env vars", { status: 500 });
   }
 
   const { messages } = await req.json();
-  const client = new Anthropic({ apiKey });
+  // If using Factory key, point to Factory's API gateway
+  const isFactory = apiKey.startsWith("fk-");
+  const client = new Anthropic({
+    apiKey,
+    ...(isFactory && { baseURL: "https://api.factory.ai/v1" }),
+  });
 
   // Fetch live events and inject into context
   const events = await fetchFrontierTowerEvents();
