@@ -171,72 +171,72 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
-          <div className="w-full max-w-md">
+        <div className="flex-1 flex items-center justify-center px-5 py-6 overflow-auto">
+          <div className="w-full max-w-lg">
             {/* Progress */}
-            <div className="flex gap-2 mb-8">
+            <div className="flex gap-2 mb-5">
               {STEPS.map((_, idx) => (
                 <div key={idx} className={`h-1 flex-1 rounded-full transition-all ${idx <= step ? "bg-red-700" : "bg-stone-200"}`} />
               ))}
             </div>
 
             {/* Step heading */}
-            <h1 className="text-stone-900 text-[24px] sm:text-[28px] font-bold tracking-tight mb-1.5">
+            <h1 className="text-stone-900 text-[22px] font-bold tracking-tight mb-1">
               {currentStep.label}
             </h1>
-            <p className="text-stone-400 text-[14px] mb-6">
+            <p className="text-stone-400 text-[13px] mb-4">
               {step === 0 ? "We'll personalize your experience based on your background." : "This helps us show you the most relevant parts of the building."}
             </p>
 
-            {/* Options */}
-            <div className="space-y-2.5 mb-6">
+            {/* Options — compact grid on desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
               {currentStep.options.map((opt) => (
                 <button key={opt.text}
                   onClick={() => { if (step < STEPS.length - 1) { setStep(step + 1); } else { send(opt.q); } }}
-                  className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl bg-white border border-stone-200 text-stone-700 text-[14px] font-medium hover:border-red-300 hover:bg-red-50/50 hover:text-stone-900 transition-all active:scale-[0.98] text-left shadow-sm">
-                  <span className="text-[18px]">{opt.emoji}</span>
+                  className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white border border-stone-200 text-stone-700 text-[13px] font-medium hover:border-red-300 hover:bg-red-50/50 hover:text-stone-900 transition-all active:scale-[0.98] text-left shadow-sm">
+                  <span className="text-[16px]">{opt.emoji}</span>
                   <span>{opt.text}</span>
                 </button>
               ))}
             </div>
 
-            {/* Floor chips */}
+            {/* Floor chips — compact grid */}
             {step === 0 && (
-              <div className="mb-6">
-                <p className="text-stone-400 text-[12px] font-medium uppercase tracking-wider mb-2.5">Or explore a floor directly</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="mb-4">
+                <p className="text-stone-400 text-[11px] font-medium uppercase tracking-wider mb-2">Or explore a floor</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                   {FLOORS.map((f) => (
                     <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white border border-stone-200 hover:border-stone-400 transition-all active:scale-95"
+                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium bg-white border border-stone-200 hover:border-stone-400 transition-all active:scale-95 truncate"
                       style={{ color: f.c }}>
                       <span className="font-bold">{f.n}</span>
-                      <span>{f.label}</span>
+                      <span className="truncate">{f.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Skip / free input */}
-            <div className="flex items-center gap-3 mb-4">
+            {/* Free input */}
+            <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px bg-stone-200" />
-              <span className="text-stone-300 text-[11px] uppercase tracking-widest">or ask directly</span>
+              <span className="text-stone-300 text-[10px] uppercase tracking-widest">or ask directly</span>
               <div className="flex-1 h-px bg-stone-200" />
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) send(input); }}>
-              <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl px-4 py-3 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all shadow-sm">
+              <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all shadow-sm">
                 <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type any question..."
-                  className="flex-1 bg-transparent text-stone-900 text-[14px] placeholder-stone-300 outline-none" autoFocus />
+                  className="flex-1 bg-transparent text-stone-900 text-[13px] placeholder-stone-300 outline-none" autoFocus />
                 <button type="submit" disabled={!input.trim()}
                   className="w-8 h-8 rounded-lg bg-red-700 disabled:opacity-20 hover:bg-red-600 transition-all flex items-center justify-center">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
                 </button>
               </div>
             </form>
 
             {step > 0 && (
-              <button onClick={() => setStep(step - 1)} className="mt-3 text-stone-400 text-[13px] hover:text-stone-600 transition-colors">
+              <button onClick={() => setStep(step - 1)} className="mt-2 text-stone-400 text-[12px] hover:text-stone-600 transition-colors">
                 &larr; Back
               </button>
             )}
@@ -268,9 +268,9 @@ export default function Chat() {
           <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest mb-2 px-1">Floors</p>
           {FLOORS.map((f) => (
             <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
-              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-stone-50 transition-colors text-left group">
-              <span className="w-6 h-6 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0 bg-white border border-stone-200 group-hover:border-stone-300 transition-colors" style={{ color: f.c }}>{f.n}</span>
-              <span className="text-stone-500 text-[13px] group-hover:text-stone-800 transition-colors truncate">{f.label}</span>
+              className="w-full flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-stone-50 transition-colors text-left group">
+              <span className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center shrink-0 bg-white border border-stone-200 group-hover:border-stone-300 transition-colors" style={{ color: f.c }}>{f.n}</span>
+              <span className="text-stone-500 text-[11px] group-hover:text-stone-800 transition-colors truncate">{f.label}</span>
             </button>
           ))}
         </div>
