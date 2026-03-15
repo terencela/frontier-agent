@@ -26,13 +26,18 @@ const STEPS = [
 
 const FLOORS = [
   { n: "16", label: "d/acc Lounge", c: "#b91c1c" },
-  { n: "12", label: "Ethereum", c: "#6d28d9" },
-  { n: "9", label: "AI Lab", c: "#1d4ed8" },
-  { n: "8", label: "Biotech", c: "#047857" },
+  { n: "15", label: "Library", c: "#57534e" },
+  { n: "14", label: "Human Flourishing", c: "#0369a1" },
+  { n: "12", label: "Ethereum House", c: "#6d28d9" },
+  { n: "11", label: "Health & Longevity", c: "#15803d" },
+  { n: "10", label: "Accelerator", c: "#a16207" },
+  { n: "9", label: "AI & Autonomous", c: "#1d4ed8" },
+  { n: "8", label: "Neuro & Biotech", c: "#047857" },
   { n: "7", label: "Maker Space", c: "#b45309" },
   { n: "6", label: "Arts & Music", c: "#be185d" },
   { n: "5", label: "Fitness", c: "#0f766e" },
   { n: "4", label: "Robotics", c: "#dc2626" },
+  { n: "3", label: "Private Offices", c: "#64748b" },
   { n: "2", label: "The Spaceship", c: "#7c3aed" },
 ];
 
