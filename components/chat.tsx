@@ -4,52 +4,54 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 
 interface Message { role: "user" | "assistant"; content: string; }
 
-const ROLES = [
-  { emoji: "🧬", label: "Builder / Engineer", q: "I'm a builder — what floors and resources should I check out?" },
-  { emoji: "💰", label: "Investor / VC", q: "I'm an investor — where do I meet founders here?" },
-  { emoji: "🎨", label: "Creative / Artist", q: "I'm a creative — what's the arts scene like?" },
-  { emoji: "🔬", label: "Researcher", q: "I'm a researcher — tell me about the labs" },
-  { emoji: "👋", label: "Just exploring", q: "Give me the highlights of the Tower" },
+const STEPS = [
+  { id: "role", label: "Who are you?", options: [
+    { emoji: "🛠", text: "Builder / Engineer", q: "I'm a builder — what floors and resources should I check out?" },
+    { emoji: "💼", text: "Investor / VC", q: "I'm an investor — where do I meet founders here?" },
+    { emoji: "🎨", text: "Creative / Artist", q: "I'm a creative — what's the arts and music scene?" },
+    { emoji: "🔬", text: "Researcher", q: "I'm a researcher — tell me about the labs and science floors" },
+    { emoji: "🤝", text: "Just visiting", q: "I'm visiting — give me the best highlights of the Tower" },
+  ]},
+  { id: "interest", label: "What are you looking for?", options: [
+    { emoji: "📅", text: "Tonight's events", q: "What events are happening tonight?" },
+    { emoji: "🔧", text: "Resources & tools", q: "What resources and equipment can I use here?" },
+    { emoji: "👥", text: "Meet people", q: "Who should I connect with based on my interests?" },
+    { emoji: "🏛", text: "Floor tour", q: "Walk me through the most interesting floors" },
+    { emoji: "💰", text: "Governance & funding", q: "How do floor treasuries and governance work?" },
+  ]},
 ];
 
 const FLOORS = [
-  { n: "16", label: "d/acc Lounge", color: "#f59e0b" },
-  { n: "12", label: "Ethereum", color: "#8b5cf6" },
-  { n: "9", label: "AI Lab", color: "#3b82f6" },
-  { n: "8", label: "Biotech", color: "#10b981" },
-  { n: "7", label: "Maker Space", color: "#f97316" },
-  { n: "6", label: "Arts", color: "#ec4899" },
-  { n: "5", label: "Fitness", color: "#14b8a6" },
-  { n: "4", label: "Robotics", color: "#ef4444" },
-  { n: "2", label: "Events", color: "#a855f7" },
-];
-
-const QUICK_Q = [
-  "What events are tonight?",
-  "Where's the laser cutter?",
-  "How do floor treasuries work?",
-  "Who should I meet if I'm into AI?",
-  "What's the vibe like right now?",
+  { n: "16", label: "d/acc Lounge", c: "#b91c1c" },
+  { n: "12", label: "Ethereum", c: "#6d28d9" },
+  { n: "9", label: "AI Lab", c: "#1d4ed8" },
+  { n: "8", label: "Biotech", c: "#047857" },
+  { n: "7", label: "Maker Space", c: "#b45309" },
+  { n: "6", label: "Arts & Music", c: "#be185d" },
+  { n: "5", label: "Fitness", c: "#0f766e" },
+  { n: "4", label: "Robotics", c: "#dc2626" },
+  { n: "2", label: "The Spaceship", c: "#7c3aed" },
 ];
 
 function Md({ text }: { text: string }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {text.split("\n").map((line, i) => {
         if (/^[-*•] /.test(line))
-          return <div key={i} className="flex gap-2 pl-0.5"><span className="text-amber-400/70 shrink-0">&#8250;</span><span dangerouslySetInnerHTML={{ __html: b(line.slice(2)) }} /></div>;
+          return <div key={i} className="flex gap-2 pl-1"><span className="text-red-700 shrink-0 font-bold text-xs mt-[3px]">&bull;</span><span dangerouslySetInnerHTML={{ __html: bld(line.slice(2)) }} /></div>;
         if (/^#{1,3}\s/.test(line))
-          return <div key={i} className="font-semibold text-white text-[15px] mt-3 mb-0.5" dangerouslySetInnerHTML={{ __html: b(line.replace(/^#+\s/, "")) }} />;
-        if (!line.trim()) return <div key={i} className="h-1" />;
-        return <div key={i} dangerouslySetInnerHTML={{ __html: b(line) }} />;
+          return <div key={i} className="font-semibold text-stone-900 text-[15px] mt-3 mb-0.5" dangerouslySetInnerHTML={{ __html: bld(line.replace(/^#+\s/, "")) }} />;
+        if (!line.trim()) return <div key={i} className="h-1.5" />;
+        return <div key={i} dangerouslySetInnerHTML={{ __html: bld(line) }} />;
       })}
     </div>
   );
 }
-function b(t: string) { return t.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-medium">$1</strong>'); }
+function bld(t: string) { return t.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-stone-900 font-semibold">$1</strong>'); }
 
 export default function Chat() {
   const [screen, setScreen] = useState<"welcome" | "chat">("welcome");
+  const [step, setStep] = useState(0);
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -94,178 +96,210 @@ export default function Chat() {
     finally { setLoading(false); setTimeout(() => ta.current?.focus(), 50); }
   }
 
-  // ── WELCOME SCREEN ──
+  // ── WELCOME ──
   if (screen === "welcome" && msgs.length === 0 && !streaming) {
+    const currentStep = STEPS[step];
     return (
-      <div className="flex flex-col h-[100dvh] bg-[#0f1117] text-white overflow-auto">
-        <div className="flex-1 flex flex-col items-center justify-center px-5 py-6 relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] bg-gradient-to-b from-amber-500/[0.07] to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="flex flex-col h-[100dvh] bg-[#fafaf9] overflow-auto">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-red-700 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
+            </div>
+            <div>
+              <p className="text-stone-900 font-semibold text-[15px] leading-tight">Frontier Tower</p>
+              <p className="text-stone-400 text-[11px]">995 Market St, San Francisco</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-emerald-700 text-[11px] font-medium">Live</span>
+          </div>
+        </div>
 
-          <div className="relative z-10 text-center w-full max-w-md">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] mb-5">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] text-[#888] font-medium tracking-wide uppercase">Live — Hackathon Weekend</span>
+        <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
+          <div className="w-full max-w-md">
+            {/* Progress */}
+            <div className="flex gap-2 mb-8">
+              {STEPS.map((_, idx) => (
+                <div key={idx} className={`h-1 flex-1 rounded-full transition-all ${idx <= step ? "bg-red-700" : "bg-stone-200"}`} />
+              ))}
             </div>
 
-            <h1 className="text-[28px] sm:text-[36px] font-bold tracking-tight leading-[1.1] mb-2">Frontier Tower</h1>
-            <p className="text-[#666] text-[14px] mb-6">16 floors. 700+ members. Your AI guide to the building.</p>
+            {/* Step heading */}
+            <h1 className="text-stone-900 text-[24px] sm:text-[28px] font-bold tracking-tight mb-1.5">
+              {currentStep.label}
+            </h1>
+            <p className="text-stone-400 text-[14px] mb-6">
+              {step === 0 ? "We'll personalize your experience based on your background." : "This helps us show you the most relevant parts of the building."}
+            </p>
 
-            {/* Role buttons */}
-            <p className="text-[#777] text-[12px] mb-2 uppercase tracking-wider">I am a...</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
-              {ROLES.map((r) => (
-                <button key={r.label} onClick={() => send(r.q)}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[#aaa] text-[13px] hover:bg-white/[0.07] hover:border-amber-500/25 hover:text-white transition-all active:scale-[0.97] text-left">
-                  <span>{r.emoji}</span><span className="truncate">{r.label}</span>
+            {/* Options */}
+            <div className="space-y-2.5 mb-6">
+              {currentStep.options.map((opt) => (
+                <button key={opt.text}
+                  onClick={() => { if (step < STEPS.length - 1) { setStep(step + 1); } else { send(opt.q); } }}
+                  className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl bg-white border border-stone-200 text-stone-700 text-[14px] font-medium hover:border-red-300 hover:bg-red-50/50 hover:text-stone-900 transition-all active:scale-[0.98] text-left shadow-sm">
+                  <span className="text-[18px]">{opt.emoji}</span>
+                  <span>{opt.text}</span>
                 </button>
               ))}
             </div>
 
             {/* Floor chips */}
-            <p className="text-[#777] text-[12px] mb-2 uppercase tracking-wider">Explore a floor</p>
-            <div className="flex flex-wrap gap-1.5 justify-center mb-5">
-              {FLOORS.map((f) => (
-                <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] border transition-all hover:scale-105 active:scale-95"
-                  style={{ borderColor: f.color + "40", color: f.color, backgroundColor: f.color + "10" }}>
-                  <span className="font-bold">{f.n}</span><span className="opacity-80">{f.label}</span>
-                </button>
-              ))}
+            {step === 0 && (
+              <div className="mb-6">
+                <p className="text-stone-400 text-[12px] font-medium uppercase tracking-wider mb-2.5">Or explore a floor directly</p>
+                <div className="flex flex-wrap gap-2">
+                  {FLOORS.map((f) => (
+                    <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white border border-stone-200 hover:border-stone-400 transition-all active:scale-95"
+                      style={{ color: f.c }}>
+                      <span className="font-bold">{f.n}</span>
+                      <span>{f.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Skip / free input */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-stone-200" />
+              <span className="text-stone-300 text-[11px] uppercase tracking-widest">or ask directly</span>
+              <div className="flex-1 h-px bg-stone-200" />
             </div>
 
-            {/* Example questions */}
-            <p className="text-[#777] text-[12px] mb-2 uppercase tracking-wider">Or try asking</p>
-            <div className="space-y-1.5 mb-5">
-              {QUICK_Q.map((q) => (
-                <button key={q} onClick={() => send(q)}
-                  className="w-full text-left px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.05] text-[#888] text-[13px] hover:bg-white/[0.05] hover:text-[#bbb] hover:border-white/[0.12] transition-all">
-                  {q}
-                </button>
-              ))}
-            </div>
-
-            {/* Free text */}
             <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) send(input); }}>
-              <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 focus-within:border-amber-500/30 transition-colors">
-                <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Or type your own question..."
-                  className="flex-1 bg-transparent text-white text-[14px] placeholder-[#444] outline-none" autoFocus />
+              <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl px-4 py-3 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all shadow-sm">
+                <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type any question..."
+                  className="flex-1 bg-transparent text-stone-900 text-[14px] placeholder-stone-300 outline-none" autoFocus />
                 <button type="submit" disabled={!input.trim()}
-                  className="w-8 h-8 rounded-lg bg-amber-500 disabled:opacity-20 hover:bg-amber-400 transition-all flex items-center justify-center">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+                  className="w-8 h-8 rounded-lg bg-red-700 disabled:opacity-20 hover:bg-red-600 transition-all flex items-center justify-center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
                 </button>
               </div>
             </form>
+
+            {step > 0 && (
+              <button onClick={() => setStep(step - 1)} className="mt-3 text-stone-400 text-[13px] hover:text-stone-600 transition-colors">
+                &larr; Back
+              </button>
+            )}
           </div>
         </div>
-        <div className="shrink-0 py-2 text-center">
-          <p className="text-[#2a2a35] text-[10px]">Claude Sonnet 4 · ElevenLabs Voice · Unbrowse</p>
+
+        <div className="shrink-0 py-3 text-center border-t border-stone-100">
+          <p className="text-stone-300 text-[10px]">Claude Sonnet 4 · ElevenLabs · Unbrowse · 16 floors · 700+ members</p>
         </div>
       </div>
     );
   }
 
-  // ── CHAT SCREEN ──
+  // ── CHAT ──
   const chatEmpty = msgs.length === 0;
   return (
-    <div className="flex h-[100dvh] bg-[#0f1117] text-[#c0c0cc] text-[14px] leading-relaxed overflow-hidden">
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-52 shrink-0 border-r border-white/[0.05] bg-[#0b0c10] px-3 py-4 gap-3 overflow-y-auto">
-        <button onClick={() => { setMsgs([]); setScreen("welcome"); setInput(""); }}
-          className="flex items-center gap-2 px-1 mb-1 group">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
+    <div className="flex h-[100dvh] bg-[#fafaf9] text-stone-700 text-[14px] leading-relaxed overflow-hidden">
+      {/* Sidebar */}
+      <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r border-stone-200 bg-white px-3 py-4 gap-3 overflow-y-auto">
+        <button onClick={() => { setMsgs([]); setScreen("welcome"); setStep(0); setInput(""); }}
+          className="flex items-center gap-2.5 px-1 mb-2 group">
+          <div className="w-7 h-7 rounded-lg bg-red-700 flex items-center justify-center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
           </div>
-          <span className="text-white text-sm font-semibold group-hover:text-amber-400 transition-colors">Frontier Tower</span>
+          <span className="text-stone-900 text-sm font-bold group-hover:text-red-700 transition-colors">Frontier Tower</span>
         </button>
 
         <div>
-          <p className="text-[#3a3a45] text-[10px] uppercase tracking-widest mb-1.5 px-1">Floors</p>
+          <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest mb-2 px-1">Floors</p>
           {FLOORS.map((f) => (
             <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.04] transition-colors text-left">
-              <span className="w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center shrink-0" style={{ backgroundColor: f.color + "25", color: f.color }}>{f.n}</span>
-              <span className="text-[#666] text-xs truncate">{f.label}</span>
+              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-stone-50 transition-colors text-left group">
+              <span className="w-6 h-6 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0 bg-white border border-stone-200 group-hover:border-stone-300 transition-colors" style={{ color: f.c }}>{f.n}</span>
+              <span className="text-stone-500 text-[13px] group-hover:text-stone-800 transition-colors truncate">{f.label}</span>
             </button>
           ))}
         </div>
 
         <div>
-          <p className="text-[#3a3a45] text-[10px] uppercase tracking-widest mb-1.5 px-1">Quick questions</p>
-          {QUICK_Q.map((q) => (
+          <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest mb-2 px-1">Try asking</p>
+          {["What's tonight?", "Laser cutter?", "Treasury funding?", "AI people?"].map((q) => (
             <button key={q} onClick={() => send(q)}
-              className="w-full text-left px-2 py-1.5 rounded-md text-[#555] text-[11px] hover:bg-white/[0.04] hover:text-[#999] transition-colors truncate">
+              className="w-full text-left px-2 py-1.5 rounded-lg text-stone-400 text-[12px] hover:bg-stone-50 hover:text-stone-700 transition-colors">
               {q}
             </button>
           ))}
         </div>
 
-        <div className="mt-auto px-2 py-2 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/20">
+        <div className="mt-auto mx-1 px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-[11px] font-medium">Hackathon Live</span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-emerald-800 text-[11px] font-semibold">Hackathon Live</span>
           </div>
+          <p className="text-emerald-600 text-[10px] mt-0.5">1,000+ visitors today</p>
         </div>
       </aside>
 
-      {/* Main chat */}
+      {/* Main */}
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] shrink-0">
+        <header className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-stone-200 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={() => { setMsgs([]); setScreen("welcome"); setInput(""); }}
-              className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/15 lg:hidden">
+            <button onClick={() => { setMsgs([]); setScreen("welcome"); setStep(0); setInput(""); }}
+              className="w-8 h-8 rounded-lg bg-red-700 flex items-center justify-center lg:hidden">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
             </button>
             <div>
-              <h1 className="text-white font-semibold text-[15px]">Frontier Tower Agent</h1>
-              <p className="text-[#555] text-[11px]">16 floors · 700+ members · SF</p>
+              <h1 className="text-stone-900 font-bold text-[15px]">Frontier Tower Agent</h1>
+              <p className="text-stone-400 text-[11px]">16 floors · 700+ members · San Francisco</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400/70 text-[11px] font-medium">Live</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-emerald-700 text-[10px] font-semibold">Live</span>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="flex-1 overflow-y-auto overscroll-contain bg-[#fafaf9]">
           {chatEmpty && !streaming && !loading ? (
-            <div className="flex flex-col items-center justify-center h-full px-4 gap-3">
-              <p className="text-[#555] text-sm">Pick a question or type your own</p>
+            <div className="flex flex-col items-center justify-center h-full px-4 gap-4">
+              <p className="text-stone-400 text-[14px]">Pick a question or type your own below</p>
               <div className="flex flex-wrap gap-2 justify-center max-w-md">
-                {QUICK_Q.slice(0, 3).map((q) => (
+                {["What's tonight?", "Where's the laser cutter?", "How do treasuries work?", "Who should I meet?"].map((q) => (
                   <button key={q} onClick={() => send(q)}
-                    className="px-3 py-1.5 rounded-full border border-white/[0.08] text-[#777] text-[12px] hover:bg-white/[0.05] hover:text-white transition-all">
+                    className="px-3.5 py-2 rounded-lg bg-white border border-stone-200 text-stone-500 text-[13px] font-medium hover:border-red-300 hover:text-stone-800 hover:bg-red-50/40 transition-all">
                     {q}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="px-4 sm:px-6 py-4 space-y-4 max-w-2xl mx-auto w-full">
+            <div className="px-4 sm:px-6 py-5 space-y-5 max-w-2xl mx-auto w-full">
               {msgs.map((m, i) => (
-                <div key={i} className={`flex gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   {m.role === "assistant" && (
-                    <div className="shrink-0 w-7 h-7 mt-0.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/25 flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-amber-400" />
+                    <div className="shrink-0 w-7 h-7 mt-0.5 rounded-lg bg-red-700 flex items-center justify-center">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
                     </div>
                   )}
                   <div className={`max-w-[85%] ${
                     m.role === "user"
-                      ? "px-4 py-2.5 rounded-2xl rounded-br-md bg-white/[0.06] border border-white/[0.08] text-[#dde]"
-                      : "text-[#bbc] pt-0.5"
+                      ? "px-4 py-2.5 rounded-2xl rounded-br-sm bg-red-700 text-white"
+                      : "text-stone-600"
                   }`}>
                     {m.role === "assistant" ? <Md text={m.content} /> : m.content}
                   </div>
                   {m.role === "assistant" && (
-                    <button onClick={() => speak(m.content, i)} title={playingIdx === i ? "Stop" : "Listen to response"}
+                    <button onClick={() => speak(m.content, i)} title={playingIdx === i ? "Stop" : "Listen"}
                       className={`shrink-0 self-start mt-0.5 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                         playingIdx === i
-                          ? "bg-amber-500/25 border-2 border-amber-400/50 shadow-md shadow-amber-500/20"
-                          : "border border-white/[0.1] hover:border-amber-500/40 hover:bg-amber-500/10"
+                          ? "bg-red-100 border-2 border-red-400"
+                          : "bg-white border border-stone-200 hover:border-red-300 hover:bg-red-50"
                       }`}>
                       {playingIdx === i ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#b91c1c"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                       ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="#f59e0b" opacity="0.3"/><path d="M11 5L6 9H2v6h4l5 4V5z" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M15.54 8.46a5 5 0 010 7.07" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round"/><path d="M19.07 4.93a10 10 0 010 14.14" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="#b91c1c" opacity="0.15"/><path d="M11 5L6 9H2v6h4l5 4V5z" stroke="#b91c1c" strokeWidth="1.5"/><path d="M15.54 8.46a5 5 0 010 7.07" stroke="#b91c1c" strokeWidth="1.5" strokeLinecap="round"/><path d="M19.07 4.93a10 10 0 010 14.14" stroke="#b91c1c" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"/></svg>
                       )}
                     </button>
                   )}
@@ -273,18 +307,18 @@ export default function Chat() {
               ))}
 
               {(streaming || loading) && (
-                <div className="flex gap-2.5 justify-start">
-                  <div className="shrink-0 w-7 h-7 mt-0.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/25 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <div className="flex gap-3 justify-start">
+                  <div className="shrink-0 w-7 h-7 mt-0.5 rounded-lg bg-red-700 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
                   </div>
                   {streaming ? (
-                    <div className="text-[#bbc] max-w-[85%] pt-0.5">
+                    <div className="text-stone-600 max-w-[85%]">
                       <Md text={streaming} />
-                      <span className="inline-block w-[2px] h-4 bg-amber-400 ml-0.5 align-middle animate-pulse" />
+                      <span className="inline-block w-[2px] h-4 bg-red-700 ml-0.5 align-middle animate-pulse" />
                     </div>
                   ) : (
-                    <div className="flex gap-1.5 items-center py-3 px-1">
-                      {[0, 150, 300].map((d) => <div key={d} className="w-1.5 h-1.5 rounded-full bg-amber-400/50 animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
+                    <div className="flex gap-1.5 items-center py-3">
+                      {[0, 150, 300].map((d) => <div key={d} className="w-2 h-2 rounded-full bg-red-300 animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
                     </div>
                   )}
                 </div>
@@ -294,24 +328,23 @@ export default function Chat() {
           )}
         </div>
 
-        {/* Input bar with visible voice label */}
-        <div className="shrink-0 px-4 sm:px-6 pb-4 pt-2 border-t border-white/[0.05]">
+        <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-stone-200 bg-white">
           <form onSubmit={(e: FormEvent) => { e.preventDefault(); send(input); }} className="max-w-2xl mx-auto">
-            <div className="flex items-end gap-2 bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-2.5 focus-within:border-amber-500/30 transition-all">
+            <div className="flex items-end gap-2.5 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all">
               <textarea ref={ta} value={input}
                 onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px"; }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
                 placeholder="Ask anything about the Tower..."
                 rows={1} disabled={loading} autoFocus
-                className="flex-1 bg-transparent text-[#dde] text-[14px] placeholder-[#444] resize-none outline-none"
+                className="flex-1 bg-transparent text-stone-900 text-[14px] placeholder-stone-300 resize-none outline-none"
                 style={{ minHeight: "24px", maxHeight: "100px" }}
               />
               <button type="submit" disabled={!input.trim() || loading}
-                className="shrink-0 w-9 h-9 rounded-xl bg-amber-500 disabled:opacity-20 hover:bg-amber-400 active:scale-95 transition-all flex items-center justify-center">
+                className="shrink-0 w-9 h-9 rounded-lg bg-red-700 disabled:opacity-20 hover:bg-red-600 active:scale-95 transition-all flex items-center justify-center">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
               </button>
             </div>
-            <p className="text-center text-[#2a2a35] text-[10px] mt-1.5">Tap the speaker icon next to any response to hear it read aloud</p>
+            <p className="text-center text-stone-300 text-[10px] mt-1.5">Tap the speaker icon to hear any response read aloud</p>
           </form>
         </div>
       </div>
