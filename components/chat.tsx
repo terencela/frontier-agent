@@ -155,63 +155,62 @@ export default function Chat() {
   if (screen === "welcome" && msgs.length === 0 && !streaming) {
     const currentStep = STEPS[step];
     return (
-      <div className="flex flex-col h-[100dvh] bg-[#fafaf9] overflow-auto">
+      <div className="flex flex-col h-[100dvh] bg-[#fafaf9]">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-red-700 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-stone-200">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-red-700 flex items-center justify-center">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/></svg>
             </div>
             <div>
-              <p className="text-stone-900 font-semibold text-[15px] leading-tight">Frontier Tower</p>
-              <p className="text-stone-400 text-[11px]">995 Market St, San Francisco</p>
+              <p className="text-stone-900 font-semibold text-[14px] leading-tight">Frontier Tower</p>
+              <p className="text-stone-400 text-[10px]">995 Market St, SF</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-emerald-700 text-[11px] font-medium">Live</span>
+            <span className="text-emerald-700 text-[10px] font-medium">Live</span>
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-5 py-6 overflow-auto">
-          <div className="w-full max-w-lg">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="w-full max-w-lg mx-auto">
             {/* Progress */}
-            <div className="flex gap-2 mb-5">
+            <div className="flex gap-1.5 mb-4">
               {STEPS.map((_, idx) => (
                 <div key={idx} className={`h-1 flex-1 rounded-full transition-all ${idx <= step ? "bg-red-700" : "bg-stone-200"}`} />
               ))}
             </div>
 
-            {/* Step heading */}
-            <h1 className="text-stone-900 text-[22px] font-bold tracking-tight mb-1">
-              {currentStep.label}
-            </h1>
-            <p className="text-stone-400 text-[13px] mb-4">
-              {step === 0 ? "We'll personalize your experience based on your background." : "This helps us show you the most relevant parts of the building."}
+            {/* Heading */}
+            <h1 className="text-stone-900 text-[20px] font-bold tracking-tight mb-0.5">{currentStep.label}</h1>
+            <p className="text-stone-400 text-[12px] mb-3">
+              {step === 0 ? "Personalize your experience." : "Show you the most relevant floors."}
             </p>
 
-            {/* Options — compact grid on desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            {/* Role buttons — 2 col always */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
               {currentStep.options.map((opt) => (
                 <button key={opt.text}
                   onClick={() => { if (step < STEPS.length - 1) { setStep(step + 1); } else { send(opt.q); } }}
-                  className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white border border-stone-200 text-stone-700 text-[13px] font-medium hover:border-red-300 hover:bg-red-50/50 hover:text-stone-900 transition-all active:scale-[0.98] text-left shadow-sm">
-                  <span className="text-[16px]">{opt.emoji}</span>
-                  <span>{opt.text}</span>
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-stone-200 text-stone-700 text-[13px] font-medium hover:border-red-300 hover:bg-red-50/50 active:scale-[0.97] text-left shadow-sm transition-all">
+                  <span className="text-[15px] shrink-0">{opt.emoji}</span>
+                  <span className="leading-tight">{opt.text}</span>
                 </button>
               ))}
             </div>
 
-            {/* Floor chips — compact grid */}
+            {/* Floor chips — only on step 0, hidden on mobile to save space */}
             {step === 0 && (
-              <div className="mb-4">
-                <p className="text-stone-400 text-[11px] font-medium uppercase tracking-wider mb-2">Or explore a floor</p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+              <div className="mb-4 hidden sm:block">
+                <p className="text-stone-400 text-[10px] font-medium uppercase tracking-wider mb-2">Or explore a floor</p>
+                <div className="grid grid-cols-4 gap-1.5">
                   {FLOORS.map((f) => (
                     <button key={f.n} onClick={() => send(f.n === "M" ? "Tell me about the Co-Living Mezzanine" : f.n === "G" ? "Tell me about the Ground Floor entrance" : `Tell me about Floor ${f.n}`)}
-                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium bg-white border border-stone-200 hover:border-stone-400 transition-all active:scale-95 truncate"
+                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium bg-white border border-stone-200 hover:border-stone-400 transition-all active:scale-95 truncate"
                       style={{ color: f.c }}>
-                      <span className="font-bold">{f.n}</span>
+                      <span className="font-bold shrink-0">{f.n}</span>
                       <span className="truncate">{f.label}</span>
                     </button>
                   ))}
@@ -220,18 +219,18 @@ export default function Chat() {
             )}
 
             {/* Free input */}
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <div className="flex-1 h-px bg-stone-200" />
-              <span className="text-stone-300 text-[10px] uppercase tracking-widest">or ask directly</span>
+              <span className="text-stone-300 text-[10px] uppercase tracking-widest shrink-0">or ask directly</span>
               <div className="flex-1 h-px bg-stone-200" />
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) send(input); }}>
-              <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all shadow-sm">
+              <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl px-3 py-2.5 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all shadow-sm">
                 <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type any question..."
-                  className="flex-1 bg-transparent text-stone-900 text-[13px] placeholder-stone-300 outline-none" autoFocus />
+                  className="flex-1 bg-transparent text-stone-900 text-[13px] placeholder-stone-300 outline-none min-w-0" />
                 <button type="submit" disabled={!input.trim()}
-                  className="w-8 h-8 rounded-lg bg-red-700 disabled:opacity-20 hover:bg-red-600 transition-all flex items-center justify-center">
+                  className="w-8 h-8 rounded-lg bg-red-700 disabled:opacity-20 hover:bg-red-600 transition-all flex items-center justify-center shrink-0">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
                 </button>
               </div>
@@ -245,7 +244,7 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="shrink-0 py-3 text-center border-t border-stone-100">
+        <div className="shrink-0 py-2 text-center border-t border-stone-100">
           <p className="text-stone-300 text-[10px]">Claude Sonnet 4 · ElevenLabs · Unbrowse · 16 floors · 700+ members</p>
         </div>
       </div>
