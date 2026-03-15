@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect, FormEvent } from "react";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type SR = any;
+
 interface Message { role: "user" | "assistant"; content: string; }
 
 const STEPS = [
@@ -57,11 +60,56 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const ta = useRef<HTMLTextAreaElement>(null);
   const audioEl = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<SR>(null);
+
+  useEffect(() => {
+    const SR = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+    if (SR) setVoiceSupported(true);
+  }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, streaming]);
+
+  function toggleVoice() {
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setListening(false);
+      return;
+    }
+    const SRCtor = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+    if (!SRCtor) return;
+    const recognition = new (SRCtor as any)();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognitionRef.current = recognition;
+    setListening(true);
+
+    let finalTranscript = "";
+    recognition.onresult = (e: any) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalTranscript += e.results[i][0].transcript;
+        } else {
+          interim += e.results[i][0].transcript;
+        }
+      }
+      setInput(finalTranscript + interim);
+    };
+    recognition.onend = () => {
+      setListening(false);
+      if (finalTranscript.trim()) {
+        send(finalTranscript.trim());
+      }
+    };
+    recognition.onerror = () => { setListening(false); };
+    recognition.start();
+  }
 
   async function speak(text: string, idx: number) {
     if (audioEl.current) { audioEl.current.pause(); audioEl.current = null; }
@@ -330,21 +378,34 @@ export default function Chat() {
 
         <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-stone-200 bg-white">
           <form onSubmit={(e: FormEvent) => { e.preventDefault(); send(input); }} className="max-w-2xl mx-auto">
-            <div className="flex items-end gap-2.5 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100 transition-all">
+            <div className={`flex items-end gap-2 bg-stone-50 border rounded-xl px-4 py-3 transition-all ${listening ? "border-red-500 ring-2 ring-red-100 bg-red-50/30" : "border-stone-200 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100"}`}>
               <textarea ref={ta} value={input}
                 onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px"; }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-                placeholder="Ask anything about the Tower..."
+                placeholder={listening ? "Listening... speak now" : "Ask anything about the Tower..."}
                 rows={1} disabled={loading} autoFocus
-                className="flex-1 bg-transparent text-stone-900 text-[14px] placeholder-stone-300 resize-none outline-none"
+                className="flex-1 bg-transparent text-stone-900 text-[14px] placeholder-stone-400 resize-none outline-none"
                 style={{ minHeight: "24px", maxHeight: "100px" }}
               />
+              {voiceSupported && (
+                <button type="button" onClick={toggleVoice} disabled={loading}
+                  className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+                    listening
+                      ? "bg-red-600 animate-pulse shadow-md shadow-red-500/30"
+                      : "bg-white border border-stone-200 hover:border-red-300 hover:bg-red-50"
+                  }`}
+                  title={listening ? "Stop listening" : "Speak your question"}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={listening ? "white" : "#b91c1c"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                </button>
+              )}
               <button type="submit" disabled={!input.trim() || loading}
                 className="shrink-0 w-9 h-9 rounded-lg bg-red-700 disabled:opacity-20 hover:bg-red-600 active:scale-95 transition-all flex items-center justify-center">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
               </button>
             </div>
-            <p className="text-center text-stone-300 text-[10px] mt-1.5">Tap the speaker icon to hear any response read aloud</p>
+            <p className="text-center text-stone-300 text-[10px] mt-1.5">{voiceSupported ? "Tap the mic to speak · Tap the speaker icon on any response to hear it" : "Tap the speaker icon to hear any response read aloud"}</p>
           </form>
         </div>
       </div>
