@@ -145,8 +145,12 @@ export default function Chat() {
       const dec = new TextDecoder();
       let full = "";
       while (true) { const { done, value } = await reader.read(); if (done) break; full += dec.decode(value, { stream: true }); setStreaming(full); }
-      setMsgs([...next, { role: "assistant", content: full }]);
+      const assistantMsg = { role: "assistant" as const, content: full };
+      setMsgs([...next, assistantMsg]);
       setStreaming("");
+      // auto-play voice for every response
+      const newIdx = next.length;
+      speak(full, newIdx);
     } catch (e) { setMsgs([...next, { role: "assistant", content: e instanceof Error ? e.message : "Error" }]); }
     finally { setLoading(false); setTimeout(() => ta.current?.focus(), 50); }
   }
