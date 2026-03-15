@@ -39,6 +39,8 @@ const FLOORS = [
   { n: "4", label: "Robotics", c: "#dc2626" },
   { n: "3", label: "Private Offices", c: "#64748b" },
   { n: "2", label: "The Spaceship", c: "#7c3aed" },
+  { n: "M", label: "Co-Living", c: "#78716c" },
+  { n: "G", label: "Entrance", c: "#94a3b8" },
 ];
 
 function Md({ text }: { text: string }) {
@@ -206,7 +208,7 @@ export default function Chat() {
                 <p className="text-stone-400 text-[11px] font-medium uppercase tracking-wider mb-2">Or explore a floor</p>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                   {FLOORS.map((f) => (
-                    <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
+                    <button key={f.n} onClick={() => send(f.n === "M" ? "Tell me about the Co-Living Mezzanine" : f.n === "G" ? "Tell me about the Ground Floor entrance" : `Tell me about Floor ${f.n}`)}
                       className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium bg-white border border-stone-200 hover:border-stone-400 transition-all active:scale-95 truncate"
                       style={{ color: f.c }}>
                       <span className="font-bold">{f.n}</span>
@@ -267,7 +269,7 @@ export default function Chat() {
         <div>
           <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest mb-2 px-1">Floors</p>
           {FLOORS.map((f) => (
-            <button key={f.n} onClick={() => send(`Tell me about Floor ${f.n}`)}
+            <button key={f.n} onClick={() => send(f.n === "M" ? "Tell me about the Co-Living Mezzanine" : f.n === "G" ? "Tell me about the Ground Floor entrance" : `Tell me about Floor ${f.n}`)}
               className="w-full flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-stone-50 transition-colors text-left group">
               <span className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center shrink-0 bg-white border border-stone-200 group-hover:border-stone-300 transition-colors" style={{ color: f.c }}>{f.n}</span>
               <span className="text-stone-500 text-[11px] group-hover:text-stone-800 transition-colors truncate">{f.label}</span>
