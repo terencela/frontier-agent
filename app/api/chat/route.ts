@@ -10,7 +10,9 @@ const client = new Anthropic();
 export async function POST(req: Request) {
   const { messages } = await req.json();
   const events = await fetchFrontierTowerEvents();
-  const system = SYSTEM_PROMPT + `\n\nLIVE EVENTS (fetched from lu.ma/frontiertower via Unbrowse):\n${formatEventsForPrompt(events)}`;
+  const system =
+    SYSTEM_PROMPT +
+    `\n\nLIVE EVENTS (from lu.ma/frontiertower via Unbrowse):\n${formatEventsForPrompt(events)}`;
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
@@ -18,25 +20,32 @@ export async function POST(req: Request) {
       try {
         const stream = await client.messages.stream({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1024,
+          max_tokens: 400,
           system,
-          messages: messages.map((m: { role: string; content: string }) => ({
+          messages: messages.slice(-10).map((m: { role: string; content: string }) => ({
             role: m.role as "user" | "assistant",
             content: m.content,
           })),
         });
         for await (const chunk of stream) {
-          if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
             controller.enqueue(encoder.encode(chunk.delta.text));
           }
         }
       } catch (err) {
-        controller.enqueue(encoder.encode(err instanceof Error ? err.message : String(err)));
+        controller.enqueue(
+          encoder.encode(err instanceof Error ? err.message : String(err))
+        );
       } finally {
         controller.close();
       }
     },
   });
 
-  return new Response(readable, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  return new Response(readable, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }
