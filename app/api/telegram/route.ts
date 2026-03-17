@@ -4,6 +4,7 @@ import { SYSTEM_PROMPT } from "@/lib/frontier-data";
 import { fetchFrontierTowerEvents, formatEventsForPrompt } from "@/lib/luma";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const TG = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,13 @@ export async function POST(req: NextRequest) {
 
     const chatId = message.chat.id;
     const userText = message.text;
+
+    // Send "typing" indicator immediately
+    fetch(`${TG}/sendChatAction`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+    }).catch(() => {});
 
     let eventsContext = "";
     try {
@@ -31,12 +39,13 @@ export async function POST(req: NextRequest) {
       ? response.content[0].text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1")
       : "Something went wrong.";
 
-    // Reply directly in the HTTP response — Telegram accepts this, no second API call needed
-    return NextResponse.json({
-      method: "sendMessage",
-      chat_id: chatId,
-      text: reply,
+    await fetch(`${TG}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: reply }),
     });
+
+    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Telegram webhook error:", e);
     return NextResponse.json({ ok: true });
