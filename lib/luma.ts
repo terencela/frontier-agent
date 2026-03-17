@@ -93,10 +93,16 @@ async function directFetch(): Promise<LumaEvent[]> {
 
 function getFallback(): LumaEvent[] {
   return [
-    { title: "Intelligence at the Frontier Hackathon", date: "Mar 14-15", time: "All Day", location: "All Floors", url: "https://lu.ma/frontiertower" },
-    { title: "AI and Contemporary Nihilism Salon", date: "Mar 15", time: "6 PM", location: "Floor 14", url: "https://lu.ma/frontiertower" },
-    { title: "Town Hall 3", date: "Mar 15", time: "5:30 PM", location: "Floor 2", url: "https://lu.ma/frontiertower" },
-    { title: "Half Ripe — Live Music", date: "Mar 15", time: "6 PM", location: "Floor 6", url: "https://lu.ma/frontiertower" },
+    { title: "AI Paper Reading Club - Week 7", date: "Mar 17", time: "5:00 PM", location: "Floor 9 Annex", url: "https://luma.com/frontier-tower-ai-paper-reading-club-wee-9e37" },
+    { title: "Why Not Brain Rot: AI and Contemporary Nihilism Salon", date: "Mar 17", time: "6:00 PM", location: "Floor 14 — Human Flourishing", url: "https://luma.com/why-not-brain-rot-ai-and-contemporary-ni" },
+    { title: "Half Ripe — Live Music", date: "Mar 17", time: "6:00 PM", location: "Floor 6 — Arts & Music", url: "https://luma.com/half-ripe-8828" },
+    { title: "Taser Knife Club Night #001", date: "Mar 17", time: "6:30 PM", location: "Frontier Tower", url: "https://luma.com/taser-knife-practice1" },
+    { title: "Conversation Cafe — Playful Sincerity", date: "Mar 17", time: "7:00 PM", location: "Floor 2 — The Spaceship", url: "https://luma.com/conversation-cafe-6" },
+    { title: "Town Hall #3 — Members Only", date: "Mar 18", time: "5:30 PM", location: "Floor 2 — The Spaceship", url: "https://luma.com/town-hall-3-placeholder" },
+    { title: "Anatomy and Physiology for Biohackers", date: "Mar 18", time: "6:30 PM", location: "Floor 7 — Makerspace", url: "https://luma.com/anatomy-and-physiology-for-biohackers" },
+    { title: "14th Floor New Member Happy Hour", date: "Mar 19", time: "6:00 PM", location: "Floor 14", url: "https://luma.com/14th-floor-new-member-happy-hour" },
+    { title: "Live Feedback & Funding Q&A with Angel Investor", date: "Mar 19", time: "7:00 PM", location: "Floor 4 Annex", url: "https://luma.com/live-feedback-funding-qa-with-angel-inve-2983" },
+    { title: "Frontier Tower Open Day", date: "Mar 20", time: "1:00 PM", location: "Floor 2 — The Spaceship", url: "https://luma.com/frontier-tower-open-day-march-20th" },
   ];
 }
 
