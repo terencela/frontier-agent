@@ -2,5 +2,10 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "functions": {
+    "app/api/telegram/route.ts": { "maxDuration": 30 },
+    "app/api/chat/route.ts": { "maxDuration": 30 },
+    "app/api/voice/route.ts": { "maxDuration": 30 }
+  }
 }
