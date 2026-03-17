@@ -7,12 +7,16 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 async function sendTelegram(chatId: number, text: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  if (!token) { console.error("TELEGRAM_BOT_TOKEN missing"); return; }
+  // Strip markdown — plain text is safer, avoids Telegram parse errors
+  const plain = text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/^[-•] /gm, "• ");
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
+    body: JSON.stringify({ chat_id: chatId, text: plain }),
   });
+  const data = await res.json();
+  if (!data.ok) console.error("Telegram sendMessage failed:", JSON.stringify(data));
 }
 
 export async function POST(req: NextRequest) {
