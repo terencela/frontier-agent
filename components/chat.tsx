@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, FormEvent } from "react";
+import VoiceOrb from "./voice-orb";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type SR = any;
@@ -69,6 +70,7 @@ export default function Chat() {
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const ta = useRef<HTMLTextAreaElement>(null);
   const audioEl = useRef<HTMLAudioElement | null>(null);
@@ -160,6 +162,7 @@ export default function Chat() {
     const currentStep = STEPS[step];
     return (
       <div className="flex flex-col h-[100dvh] bg-[#fafaf9]">
+        {voiceMode && <VoiceOrb onClose={() => setVoiceMode(false)} />}
         {/* Top bar */}
         <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-stone-200">
           <div className="flex items-center gap-2">
@@ -171,9 +174,16 @@ export default function Chat() {
               <p className="text-stone-400 text-[10px]">995 Market St, SF</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-emerald-700 text-[10px] font-medium">Live</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setVoiceMode(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-red-700 hover:bg-red-600 transition-all">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <span className="text-white text-[11px] font-semibold">Voice</span>
+            </button>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-emerald-700 text-[10px] font-medium">Live</span>
+            </div>
           </div>
         </div>
 
@@ -259,6 +269,7 @@ export default function Chat() {
   const chatEmpty = msgs.length === 0;
   return (
     <div className="flex h-[100dvh] bg-[#fafaf9] text-stone-700 text-[14px] leading-relaxed overflow-hidden">
+      {voiceMode && <VoiceOrb onClose={() => setVoiceMode(false)} />}
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r border-stone-200 bg-white px-3 py-4 gap-3 overflow-y-auto">
         <button onClick={() => { setMsgs([]); setScreen("welcome"); setStep(0); setInput(""); }}
@@ -312,9 +323,16 @@ export default function Chat() {
               <p className="text-stone-400 text-[11px]">16 floors · 700+ members · San Francisco</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-emerald-700 text-[10px] font-semibold">Live</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setVoiceMode(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-red-700 hover:bg-red-600 transition-all">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <span className="text-white text-[11px] font-semibold">Voice</span>
+            </button>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-emerald-700 text-[10px] font-semibold">Live</span>
+            </div>
           </div>
         </header>
 
