@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "@/lib/frontier-data";
-import { fetchFrontierTowerEvents, formatEventsForPrompt } from "@/lib/luma";
+import { formatEventsForPrompt } from "@/lib/luma";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const TG = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
+
+// Hardcoded events — skip Unbrowse/Luma fetch to avoid 12s timeout killing the function
+const EVENTS_CONTEXT = formatEventsForPrompt([
+  { title: "AI Paper Reading Club - Week 7", date: "Mar 17", time: "5:00 PM", location: "Floor 9 Annex", url: "https://lu.ma/frontiertower" },
+  { title: "Why Not Brain Rot: AI and Contemporary Nihilism Salon", date: "Mar 17", time: "6:00 PM", location: "Floor 14", url: "https://lu.ma/frontiertower" },
+  { title: "Half Ripe — Live Music", date: "Mar 17", time: "6:00 PM", location: "Floor 6", url: "https://lu.ma/frontiertower" },
+  { title: "Town Hall #3 — Members Only", date: "Mar 18", time: "5:30 PM", location: "Floor 2", url: "https://lu.ma/frontiertower" },
+  { title: "14th Floor New Member Happy Hour", date: "Mar 19", time: "6:00 PM", location: "Floor 14", url: "https://lu.ma/frontiertower" },
+  { title: "Frontier Tower Open Day", date: "Mar 20", time: "1:00 PM", location: "Floor 2", url: "https://lu.ma/frontiertower" },
+]);
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,18 +25,13 @@ export async function POST(req: NextRequest) {
     const chatId = message.chat.id;
     const userText = message.text;
 
-    // Send "typing" indicator immediately
     fetch(`${TG}/sendChatAction`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, action: "typing" }),
     }).catch(() => {});
 
-    let eventsContext = "";
-    try {
-      const events = await fetchFrontierTowerEvents();
-      if (events.length > 0) eventsContext = `\n\n## LIVE EVENTS\n${formatEventsForPrompt(events)}`;
-    } catch {}
+    const eventsContext = `\n\n## LIVE EVENTS\n${EVENTS_CONTEXT}`;
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
